@@ -22,8 +22,8 @@ public class ProducerMain {
                 .getProducerCommandFactory(commandHandler);
 
         try {
-//            initCLIClient(args, commandFactory);
-            initDefaultClientAndExecute();
+            initCLIClient(args, commandFactory);
+//            initDefaultClientAndExecute();
         } catch (final Exception ex) {
             System.out.println("Something went wrong. Please try again!");
         }

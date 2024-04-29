@@ -51,9 +51,7 @@ public class FileQueue implements Queue {
 
     @Override
     public synchronized Message poll(final String pollerId, int offset) {
-        File lockFile = null;
-        try {
-            lockFile = FileUtils.lock(Path.of("tmp/queues/" + this.name + "-" + pollerId));
+        synchronized (this.name + "-" + pollerId) {
             try {
                 while (true) {
                     String line = reader.readLine();
@@ -67,12 +65,9 @@ public class FileQueue implements Queue {
                     }
 
                 }
-            } finally {
-                if (lockFile != null)
-                    FileUtils.unLock(lockFile);
+            } catch (final IOException exception) {
+                exception.printStackTrace();
             }
-        } catch (final IOException exception) {
-            exception.printStackTrace();
         }
         return null;
     }

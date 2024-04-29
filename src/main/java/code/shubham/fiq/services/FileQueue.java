@@ -2,6 +2,7 @@ package code.shubham.fiq.services;
 
 import code.shubham.commons.utils.FileUtils;
 import code.shubham.commons.utils.ShutdownUtils;
+import code.shubham.fiq.consumer.ConsumerHandler;
 import code.shubham.fiq.models.Message;
 
 import java.io.BufferedReader;
@@ -16,38 +17,50 @@ public class FileQueue implements Queue {
 
     private final Path path;
     private BufferedReader reader;
+    private int currentReaderLine = 0;
+    private String name;
 
-    public FileQueue(final String filePath) {
+    public FileQueue(final String name, final String filePath) {
+        this.name = name;
         this.path = FileUtils.createFileIfNotExists(filePath);
         try {
             this.reader = new BufferedReader(new FileReader(this.path.toFile()));
         } catch (final IOException exception) {
             exception.printStackTrace();
         }
+
         ShutdownUtils.defer(this::close);
+    }
+
+    @Override
+    public String getName() {
+        return this.name;
     }
 
     @Override
     public void offer(final Message message) throws Exception {
         File lockFile = null;
         try {
-            lockFile = this.lock();
+            lockFile = FileUtils.lock(this.path);
             Files.write(this.path, (message.toString() + "\n").getBytes(), StandardOpenOption.APPEND);
         } finally {
             if (lockFile != null)
-                this.unLock(lockFile);
+                FileUtils.unLock(lockFile);
         }
     }
 
     @Override
-    public Message poll() {
-        String line;
+    public Message poll(final String pollerId, int offset) {
         try {
             while (true) {
-                line = reader.readLine();
+                String line = reader.readLine();
                 if (line != null) {
+                    this.currentReaderLine++;
+                    if (this.currentReaderLine <= offset)
+                        continue;
                     return Message.of(line);
                 }
+
             }
         } catch (final IOException exception) {
             exception.printStackTrace();
@@ -55,15 +68,12 @@ public class FileQueue implements Queue {
         return null;
     }
 
-    private File lock() {
-        return FileUtils.lockFile(this.path.toFile().getAbsolutePath() + ".lock");
-    }
-    private void unLock(final File lockFile) {
-        FileUtils.delete(lockFile);
-    }
-
     public void close() {
-
+        try {
+            this.reader.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 

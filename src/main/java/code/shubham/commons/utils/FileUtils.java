@@ -47,4 +47,11 @@ public class FileUtils {
         file.delete();
     }
 
+    public static File lock(final Path filePath) {
+        return FileUtils.lockFile(filePath.toFile().getAbsolutePath() + ".lock");
+    }
+    public static void unLock(final File lockFile) {
+        FileUtils.delete(lockFile);
+    }
+
 }

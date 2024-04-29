@@ -36,4 +36,4 @@ run-producer: setup
 	java -cp build/libs/fiq-1.0.0.jar code.shubham.fiq.producer.ProducerMain
 
 run-consumer: setup
-	java -cp build/libs/fiq-1.0.0.jar code.shubham.fiq.consumer.ConsumerMain $(queue) $(concurrencyFactor)
+	java -cp build/libs/fiq-1.0.0.jar code.shubham.fiq.consumer.ConsumerMain $(queue) $(concurrencyFactor) $(name)

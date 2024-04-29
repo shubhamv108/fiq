@@ -16,7 +16,7 @@ public class QueueFactory {
         }
 
         synchronized (queueName) {
-            final FileQueue newQueue = new FileQueue("tmp/queues/" + queueName);
+            final FileQueue newQueue = new FileQueue(queueName, "tmp/queues/" + queueName);
             this.queues.put(queueName, newQueue);
             return newQueue;
         }

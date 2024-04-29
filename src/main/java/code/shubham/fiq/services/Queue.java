@@ -2,10 +2,11 @@ package code.shubham.fiq.services;
 
 import code.shubham.fiq.models.Message;
 
-import java.util.List;
-
 public interface Queue {
+
+    String getName();
+
     void offer(Message message) throws Exception;
 
-    Message poll();
+    Message poll(String pollerId, int offset);
 }

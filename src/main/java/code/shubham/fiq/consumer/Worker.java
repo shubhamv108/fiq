@@ -13,33 +13,21 @@ public class Worker implements Runnable {
     private final int workerId;
     private final String consumerName;
     private final Queue queue;
+    private final int offset;
 
-    public Worker(final int workerId, final String consumerName, final Queue queue) {
+    public Worker(final int workerId, final String consumerName, final Queue queue, final int offset) {
         this.workerId = workerId;
         this.consumerName = consumerName;
         this.queue = queue;
+        this.offset = offset;
     }
 
     @Override
     public void run() {
         while (true) {
-            File lockFile = null;
-            try {
-                lockFile = FileUtils.lock(Path.of("tmp/queues/" + queue.getName() + "-" + consumerName));
-                int offset = ConsumerHandler.getOffset(this.consumerName);
-                System.out.println("WorkerId: "+workerId+"; Polling message at offset: " + offset);
-                final Message message = queue.poll(this.consumerName, offset);
-                this.processMessage(message);
-                ConsumerHandler.commit(this.consumerName, offset + 1);
-            } finally {
-                if (lockFile != null)
-                    FileUtils.unLock(lockFile);
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            System.out.println("WorkerId: "+workerId+"; Polling message at offset: " + offset);
+            final Message message = queue.poll(this.consumerName, offset);
+            this.processMessage(message);
         }
     }
 

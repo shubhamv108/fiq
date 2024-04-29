@@ -50,17 +50,26 @@ public class FileQueue implements Queue {
     }
 
     @Override
-    public Message poll(final String pollerId, int offset) {
+    public synchronized Message poll(final String pollerId, int offset) {
+        File lockFile = null;
         try {
-            while (true) {
-                String line = reader.readLine();
-                if (line != null) {
-                    this.currentReaderLine++;
-                    if (this.currentReaderLine <= offset)
-                        continue;
-                    return Message.of(line);
-                }
+            lockFile = FileUtils.lock(Path.of("tmp/queues/" + this.name + "-" + pollerId));
+            try {
+                while (true) {
+                    String line = reader.readLine();
+                    if (line != null) {
+                        this.currentReaderLine++;
+                        if (this.currentReaderLine <= offset)
+                            continue;
 
+                        ConsumerHandler.commit(pollerId + "-" + this.name, currentReaderLine);
+                        return Message.of(line);
+                    }
+
+                }
+            } finally {
+                if (lockFile != null)
+                    FileUtils.unLock(lockFile);
             }
         } catch (final IOException exception) {
             exception.printStackTrace();

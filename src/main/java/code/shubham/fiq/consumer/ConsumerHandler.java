@@ -1,10 +1,7 @@
 package code.shubham.fiq.consumer;
 
 import code.shubham.commons.utils.FileUtils;
-import code.shubham.fiq.services.QueueFactory;
-import code.shubham.fiq.services.QueueFactory.SingletonHolder;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,39 +9,25 @@ import java.nio.file.StandardOpenOption;
 
 public class ConsumerHandler {
 
-    public static int getOffset(final String consumerName) {
-        File lockFile = null;
+    public static int getOffset(final String consumerAndQueueName) {
+        FileUtils.createFileIfNotExists("tmp/offsets/" + consumerAndQueueName);
         try {
-            lockFile = FileUtils.lock(Path.of("tmp/offsets/" + consumerName));
-            FileUtils.createFileIfNotExists("tmp/offsets/" + consumerName);
-            try {
-                return Files.readAllLines(Path.of("tmp/offsets/" + consumerName))
-                        .stream()
-                        .findFirst()
-                        .map(Integer::parseInt)
-                        .orElse(0);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } finally {
-            if (lockFile != null)
-                FileUtils.unLock(lockFile);
+            return Files.readAllLines(Path.of("tmp/offsets/" + consumerAndQueueName))
+                    .stream()
+                    .findFirst()
+                    .map(Integer::parseInt)
+                    .orElse(0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public static void commit(final String consumerName, final int offset) {
-        File lockFile = null;
+    public static void commit(final String consumerAndQueueName, final int offset) {
+        FileUtils.createFileIfNotExists("tmp/offsets/" + consumerAndQueueName);
         try {
-            lockFile = FileUtils.lock(Path.of("tmp/offsets/" + consumerName));
-            FileUtils.createFileIfNotExists("tmp/offsets/" + consumerName);
-            try {
-                Files.write(Path.of("tmp/offsets/" + consumerName), String.valueOf(offset).getBytes(), StandardOpenOption.WRITE);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        } finally {
-            if (lockFile != null)
-                FileUtils.unLock(lockFile);
+            Files.write(Path.of("tmp/offsets/" + consumerAndQueueName), String.valueOf(offset).getBytes(), StandardOpenOption.WRITE);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

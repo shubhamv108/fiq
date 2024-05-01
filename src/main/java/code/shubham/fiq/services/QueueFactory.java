@@ -10,12 +10,17 @@ public class QueueFactory {
     private QueueFactory() {}
 
     public Queue getQueue(final String queueName) {
-        final FileQueue queue = queues.get(queueName);
+        FileQueue queue = this.queues.get(queueName);
         if (queue != null) {
             return queue;
         }
 
-        synchronized (queueName) {
+        synchronized (queueName + "-create") {
+            queue = this.queues.get(queueName);
+            if (queue != null) {
+                return queue;
+            }
+
             final FileQueue newQueue = new FileQueue(queueName, "tmp/queues/" + queueName);
             this.queues.put(queueName, newQueue);
             return newQueue;

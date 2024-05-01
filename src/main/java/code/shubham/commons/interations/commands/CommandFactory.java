@@ -6,11 +6,10 @@ import java.security.InvalidParameterException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommandFactory {
-    private final Map<String, Command> commands;
+public record CommandFactory(Map<String, Command> commands) {
 
     public CommandFactory() {
-        this.commands = new HashMap<>();
+        this(new HashMap<>());
     }
 
     public void addCommand(final String name, final Command command) {

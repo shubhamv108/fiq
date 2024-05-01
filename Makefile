@@ -24,6 +24,7 @@ teardown:
 
 clean:
 	./gradlew clean
+	sudo rm -rf tmp/locks/*
 	clear
 
 format:
@@ -31,6 +32,7 @@ format:
 
 setup: clean format
 	./gradlew build
+	sudo chmod -R 777 tmp
 
 run-producer: setup
 	java -cp build/libs/fiq-1.0.0.jar code.shubham.fiq.producer.ProducerMain

@@ -8,12 +8,7 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-public class SendCommand implements Command {
-    private final ProducerCommandHandler commandHandler;
-
-    public SendCommand(final ProducerCommandHandler commandHandler) {
-        this.commandHandler = commandHandler;
-    }
+public record SendCommand(ProducerCommandHandler commandHandler) implements Command {
 
     @Override
     public String helpText() {

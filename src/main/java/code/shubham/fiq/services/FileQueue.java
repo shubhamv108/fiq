@@ -1,12 +1,12 @@
 package code.shubham.fiq.services;
 
 import code.shubham.commons.utils.FileUtils;
+import code.shubham.commons.utils.ProcessLock;
 import code.shubham.commons.utils.ShutdownUtils;
 import code.shubham.fiq.consumer.ConsumerHandler;
 import code.shubham.fiq.models.Message;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,14 +15,16 @@ import java.nio.file.StandardOpenOption;
 
 public class FileQueue implements Queue {
 
+    private final String name;
     private final Path path;
     private BufferedReader reader;
     private int currentReaderLine = 0;
-    private String name;
+    private final ProcessLock processLock;
 
     public FileQueue(final String name, final String filePath) {
         this.name = name;
         this.path = FileUtils.createFileIfNotExists(filePath);
+        this.processLock = new ProcessLock("Q" + this.name);
         try {
             this.reader = new BufferedReader(new FileReader(this.path.toFile()));
         } catch (final IOException exception) {
@@ -38,15 +40,14 @@ public class FileQueue implements Queue {
     }
 
     @Override
-    public void offer(final Message message) throws Exception {
-        File lockFile = null;
-        try {
-            lockFile = FileUtils.lock(this.path);
-            Files.write(this.path, (message.toString() + "\n").getBytes(), StandardOpenOption.APPEND);
-        } finally {
-            if (lockFile != null)
-                FileUtils.unLock(lockFile);
-        }
+    public void offer(final Message message) {
+        this.processLock.run(() -> {
+            try {
+                Files.write(this.path, (message.toString() + "\n").getBytes(), StandardOpenOption.APPEND);
+            } catch (final IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
@@ -54,13 +55,13 @@ public class FileQueue implements Queue {
         synchronized (this.name + "-" + pollerId) {
             try {
                 while (true) {
-                    String line = reader.readLine();
+                    String line = this.reader.readLine();
                     if (line != null) {
                         this.currentReaderLine++;
                         if (this.currentReaderLine <= offset)
                             continue;
 
-                        ConsumerHandler.commit(pollerId + "-" + this.name, currentReaderLine);
+                        ConsumerHandler.commit(pollerId + "-" + this.name, this.currentReaderLine);
                         return Message.of(line);
                     }
 
@@ -75,11 +76,8 @@ public class FileQueue implements Queue {
     public void close() {
         try {
             this.reader.close();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
-
-
-
 }

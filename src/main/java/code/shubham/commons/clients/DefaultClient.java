@@ -3,8 +3,6 @@ package code.shubham.commons.clients;
 import code.shubham.commons.interations.commands.CommandFactory;
 
 import javax.naming.OperationNotSupportedException;
-import java.io.BufferedReader;
-import java.io.IOException;
 
 public class DefaultClient extends Client {
     public DefaultClient(CommandFactory commandFactory) {
@@ -12,7 +10,7 @@ public class DefaultClient extends Client {
     }
 
     @Override
-    public void handleInput() throws IOException, OperationNotSupportedException {
+    public void handleInput() throws OperationNotSupportedException {
         throw new OperationNotSupportedException();
     }
 }

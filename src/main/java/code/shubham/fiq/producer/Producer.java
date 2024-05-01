@@ -6,21 +6,11 @@ import code.shubham.fiq.services.QueueFactory;
 
 import java.util.List;
 
-public class Producer implements Runnable {
-    private final String queueName;
-    private final List<Message> messages;
-
+public record Producer(String queueName, List<Message> messages) implements Runnable {
     public Producer(
             final String queueName,
             final Message messages) {
         this(queueName, List.of(messages));
-    }
-
-    public Producer(
-            final String queueName,
-            final List<Message> messages) {
-        this.queueName = queueName;
-        this.messages = messages;
     }
 
     @Override
@@ -33,9 +23,9 @@ public class Producer implements Runnable {
         try {
             queue.offer(message);
             System.out.printf("ACK: %s%n", message);
-        } catch (Exception exception) {
-            System.out.printf("NACK: %s%n", message);
-            System.out.println(exception.getMessage());
+        } catch (final Exception exception) {
+            System.err.printf("NACK: %s%n", message);
+            System.err.println(exception);
         }
     }
 }
